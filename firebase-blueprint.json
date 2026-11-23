@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "SiteConfig": {
+      "title": "SiteConfig",
+      "description": "Published brutalist architectural firm website content including copy, metrics, projects, architects, and optional hosted walkthrough video URL.",
+      "type": "object",
+      "properties": {
+        "payload": {
+          "type": "string",
+          "maxLength": 400000,
+          "description": "JSON-serialized site copy, metrics, 6 projects, and 6 architect profiles."
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix timestamp in milliseconds of the last admin publish."
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of the admin who published the site configuration."
+        }
+      },
+      "required": ["payload", "updatedAt", "updatedBy"]
+    },
+    "SiteMedia": {
+      "title": "SiteMedia",
+      "description": "Compressed web-optimized image asset (firm logo, background photo, architect headshot, or project shot) stored for public viewing.",
+      "type": "object",
+      "properties": {
+        "dataUrl": {
+          "type": "string",
+          "maxLength": 850000,
+          "description": "Web-optimized base64 data URL of the image."
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Original filename."
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "MIME type of the image."
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix timestamp in milliseconds."
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of the admin who uploaded the image."
+        }
+      },
+      "required": ["dataUrl", "name", "type", "updatedAt", "updatedBy"]
+    }
+  },
+  "firestore": {
+    "/siteConfig/{configId}": {
+      "schema": { "$ref": "#/entities/SiteConfig" },
+      "description": "Publicly readable, admin-writable website content configuration."
+    },
+    "/siteMedia/{mediaId}": {
+      "schema": { "$ref": "#/entities/SiteMedia" },
+      "description": "Publicly readable, admin-writable compressed image assets."
+    }
+  }
+}

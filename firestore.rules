@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && request.auth.token.email == 'jairoespelimbergo@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSiteConfig(data) {
+      return data.keys().hasAll(['payload', 'updatedAt', 'updatedBy'])
+        && data.keys().hasOnly(['payload', 'updatedAt', 'updatedBy'])
+        && data.payload is string && data.payload.size() >= 2 && data.payload.size() <= 400000
+        && data.updatedAt is number
+        && data.updatedBy is string && data.updatedBy == request.auth.uid;
+    }
+
+    function isValidSiteMedia(data) {
+      return data.keys().hasAll(['dataUrl', 'name', 'type', 'updatedAt', 'updatedBy'])
+        && data.keys().hasOnly(['dataUrl', 'name', 'type', 'updatedAt', 'updatedBy'])
+        && data.dataUrl is string && data.dataUrl.size() >= 10 && data.dataUrl.size() <= 850000
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 200
+        && data.type is string && data.type.size() >= 1 && data.type.size() <= 64
+        && data.updatedAt is number
+        && data.updatedBy is string && data.updatedBy == request.auth.uid;
+    }
+
+    // Publicly readable site configuration; strictly admin-only writes
+    match /siteConfig/{configId} {
+      allow get: if isValidId(configId);
+      allow list: if false;
+      allow create: if isAdmin() && isValidId(configId) && isValidSiteConfig(request.resource.data);
+      allow update: if isAdmin() && isValidId(configId) && isValidSiteConfig(request.resource.data);
+      allow delete: if isAdmin() && isValidId(configId);
+    }
+
+    // Publicly readable compressed site media; strictly admin-only writes
+    match /siteMedia/{mediaId} {
+      allow get: if isValidId(mediaId);
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(mediaId) && isValidSiteMedia(request.resource.data);
+      allow update: if isAdmin() && isValidId(mediaId) && isValidSiteMedia(request.resource.data);
+      allow delete: if isAdmin() && isValidId(mediaId);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
